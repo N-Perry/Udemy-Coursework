@@ -473,7 +473,7 @@ var app = (function () {
     	return child_ctx;
     }
 
-    // (48:0) {:else}
+    // (50:0) {:else}
     function create_else_block(ctx) {
     	let p;
     	let t;
@@ -482,7 +482,7 @@ var app = (function () {
     		c: function create() {
     			p = element("p");
     			t = text(/*userPassword*/ ctx[0]);
-    			add_location(p, file, 48, 2, 1187);
+    			add_location(p, file, 50, 2, 1224);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, p, anchor);
@@ -500,14 +500,14 @@ var app = (function () {
     		block,
     		id: create_else_block.name,
     		type: "else",
-    		source: "(48:0) {:else}",
+    		source: "(50:0) {:else}",
     		ctx
     	});
 
     	return block;
     }
 
-    // (46:18) 
+    // (48:18) 
     function create_if_block_2(ctx) {
     	let p;
 
@@ -515,7 +515,7 @@ var app = (function () {
     		c: function create() {
     			p = element("p");
     			p.textContent = "Too long";
-    			add_location(p, file, 46, 2, 1161);
+    			add_location(p, file, 48, 2, 1198);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, p, anchor);
@@ -530,14 +530,14 @@ var app = (function () {
     		block,
     		id: create_if_block_2.name,
     		type: "if",
-    		source: "(46:18) ",
+    		source: "(48:18) ",
     		ctx
     	});
 
     	return block;
     }
 
-    // (44:19) 
+    // (46:19) 
     function create_if_block_1(ctx) {
     	let p;
 
@@ -545,7 +545,7 @@ var app = (function () {
     		c: function create() {
     			p = element("p");
     			p.textContent = "Too short";
-    			add_location(p, file, 44, 2, 1123);
+    			add_location(p, file, 46, 2, 1160);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, p, anchor);
@@ -560,14 +560,14 @@ var app = (function () {
     		block,
     		id: create_if_block_1.name,
     		type: "if",
-    		source: "(44:19) ",
+    		source: "(46:19) ",
     		ctx
     	});
 
     	return block;
     }
 
-    // (42:0) {#if userPassword === ""}
+    // (44:0) {#if userPassword === ""}
     function create_if_block(ctx) {
     	let p;
 
@@ -575,7 +575,7 @@ var app = (function () {
     		c: function create() {
     			p = element("p");
     			p.textContent = "Please enter a password:";
-    			add_location(p, file, 42, 2, 1069);
+    			add_location(p, file, 44, 2, 1106);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, p, anchor);
@@ -590,14 +590,14 @@ var app = (function () {
     		block,
     		id: create_if_block.name,
     		type: "if",
-    		source: "(42:0) {#if userPassword === \\\"\\\"}",
+    		source: "(44:0) {#if userPassword === \\\"\\\"}",
     		ctx
     	});
 
     	return block;
     }
 
-    // (54:2) {#each passwordList as password, index (password.id)}
+    // (56:2) {#each passwordList as password, index (password.id)}
     function create_each_block(key_1, ctx) {
     	let li;
     	let t0_value = /*password*/ ctx[8].userPassword + "";
@@ -618,7 +618,7 @@ var app = (function () {
     			t0 = text(t0_value);
     			t1 = space();
     			attr_dev(li, "class", "passwordItem svelte-amrw53");
-    			add_location(li, file, 54, 4, 1334);
+    			add_location(li, file, 56, 4, 1371);
     			this.first = li;
     		},
     		m: function mount(target, anchor) {
@@ -646,7 +646,7 @@ var app = (function () {
     		block,
     		id: create_each_block.name,
     		type: "each",
-    		source: "(54:2) {#each passwordList as password, index (password.id)}",
+    		source: "(56:2) {#each passwordList as password, index (password.id)}",
     		ctx
     	});
 
@@ -742,19 +742,19 @@ var app = (function () {
     				each_blocks[i].c();
     			}
 
-    			add_location(h1, file, 22, 0, 418);
-    			add_location(p, file, 24, 0, 439);
-    			add_location(li0, file, 27, 2, 473);
-    			add_location(li1, file, 28, 2, 550);
-    			add_location(li2, file, 32, 2, 676);
-    			add_location(li3, file, 35, 2, 768);
-    			add_location(li4, file, 36, 2, 840);
-    			add_location(li5, file, 37, 2, 919);
-    			add_location(ol, file, 26, 0, 466);
+    			add_location(h1, file, 24, 0, 455);
+    			add_location(p, file, 26, 0, 476);
+    			add_location(li0, file, 29, 2, 510);
+    			add_location(li1, file, 30, 2, 587);
+    			add_location(li2, file, 34, 2, 713);
+    			add_location(li3, file, 37, 2, 805);
+    			add_location(li4, file, 38, 2, 877);
+    			add_location(li5, file, 39, 2, 956);
+    			add_location(ol, file, 28, 0, 503);
     			attr_dev(input, "type", "text");
-    			add_location(input, file, 40, 0, 993);
-    			add_location(button, file, 51, 0, 1216);
-    			add_location(ul, file, 52, 0, 1269);
+    			add_location(input, file, 42, 0, 1030);
+    			add_location(button, file, 53, 0, 1253);
+    			add_location(ul, file, 54, 0, 1306);
     		},
     		l: function claim(nodes) {
     			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
@@ -869,11 +869,13 @@ var app = (function () {
     	let passwordList = [];
 
     	function addPassword() {
-    		$$invalidate(1, passwordList = [...passwordList, { id: Math.random(), userPassword }]);
+    		if (!tooShort && !tooLong) {
+    			$$invalidate(1, passwordList = [...passwordList, { id: Math.random(), userPassword }]);
+    		}
     	}
 
     	function deletePassword(i) {
-    		$$invalidate(1, passwordList = [...passwordList.slice(0, i), ...passwordList.slice(i + 1)]);
+    		$$invalidate(1, passwordList = passwordList.filter((pw, idx) => idx !== i));
     	}
 
     	const writable_props = [];

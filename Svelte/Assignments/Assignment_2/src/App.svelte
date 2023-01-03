@@ -6,17 +6,19 @@
   $: tooLong = userPassword.length > 10;
 
   function addPassword() {
-    passwordList = [
-      ...passwordList,
-      {
-        id: Math.random(),
-        userPassword,
-      },
-    ];
+    if (!tooShort && !tooLong) {
+      passwordList = [
+        ...passwordList,
+        {
+          id: Math.random(),
+          userPassword,
+        },
+      ];
+    }
   }
 
   function deletePassword(i) {
-    passwordList = [...passwordList.slice(0, i), ...passwordList.slice(i + 1)];
+    passwordList = passwordList.filter((pw, idx) => idx !== i);
   }
 </script>
 
