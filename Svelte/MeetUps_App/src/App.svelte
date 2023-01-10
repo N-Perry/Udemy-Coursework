@@ -1,6 +1,7 @@
 <script>
   import Header from "./UI/Header.svelte";
   import MeetupGrid from "./Meetups/MeetupGrid.svelte";
+  import TextInput from "./UI/TextInput.svelte";
 
   let title = "";
   let subtitle = "";
@@ -52,30 +53,48 @@
 <Header />
 <main>
   <form on:submit|preventDefault={addMeetup}>
-    <div class="form-control">
-      <label for="title">Title</label>
-      <input type="text" id="title" bind:value={title} />
-    </div>
-    <div class="form-control">
-      <label for="subtitle">Subtitle</label>
-      <input type="text" id="subtitle" bind:value={subtitle} />
-    </div>
-    <div class="form-control">
-      <label for="address">Address</label>
-      <input type="text" id="address" bind:value={address} />
-    </div>
-    <div class="form-control">
-      <label for="imageUrl">Image Url</label>
-      <input type="text" id="imageUrl" bind:value={imageUrl} />
-    </div>
-    <div class="form-control">
-      <label for="email">E-Mail</label>
-      <input type="email" id="email" bind:value={contactEmail} />
-    </div>
-    <div class="form-control">
-      <label for="description">Description</label>
-      <textarea id="description" rows="3" bind:value={description} />
-    </div>
+    <TextInput
+      type="text"
+      id="title"
+      label="Title"
+      value={title}
+      on:input={(event) => (title = event.target.value)}
+    />
+    <TextInput
+      type="text"
+      id="subtitle"
+      label="Subtitle"
+      value={subtitle}
+      on:input={(event) => (subtitle = event.target.value)}
+    />
+    <TextInput
+      type="text"
+      id="address"
+      label="Address"
+      value={address}
+      on:input={(event) => (address = event.target.value)}
+    />
+    <TextInput
+      type="text"
+      id="imageUrl"
+      label="Image URL"
+      value={imageUrl}
+      on:input={(event) => (imageUrl = event.target.value)}
+    />
+    <TextInput
+      type="email"
+      id="email"
+      label="E-Mail"
+      value={contactEmail}
+      on:input={(event) => (contactEmail = event.target.value)}
+    />
+    <TextInput
+      controlType="textarea"
+      id="description"
+      label="Description"
+      value={description}
+      on:input={(event) => (description = event.target.value)}
+    />
     <button type="submit">Save</button>
   </form>
   <MeetupGrid {meetups} />
@@ -84,5 +103,11 @@
 <style>
   main {
     margin-top: 5rem;
+  }
+
+  form {
+    width: 30rem;
+    max-width: 90%;
+    margin: auto;
   }
 </style>
