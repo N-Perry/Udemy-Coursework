@@ -1,14 +1,17 @@
 <script>
+  import { createEventDispatcher } from "svelte";
   export let content;
+
+  const dispatch = createEventDispatcher();
 </script>
 
-<div class="backdrop" />
+<div class="backdrop" on:click={() => dispatch("cancel")} />
 <div class="modal">
   <header><slot name="header" /></header>
   <div class="content"><slot /></div>
   <footer>
     <slot name="footer">
-      <button>Close</button>
+      <button on:click={() => dispatch("close")}>Close</button>
     </slot>
   </footer>
 </div>
