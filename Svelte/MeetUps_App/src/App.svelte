@@ -22,6 +22,7 @@
         "https://imgs.search.brave.com/-cpbUIT6oXZ5dAZudcw7qSohHBRWyblA67-42JGDNds/rs:fit:597:225:1/g:ce/aHR0cHM6Ly90c2Uy/Lm1tLmJpbmcubmV0/L3RoP2lkPU9JUC4x/eldrNlhVVWxWQTh5/WHJOUDh1MjNRSGFG/NCZwaWQ9QXBp",
       address: "27 Nerd Rd, 32523 New York",
       contactEmail: "code@test.com",
+      isFavorite: false,
     },
     {
       id: "m2",
@@ -33,6 +34,7 @@
         "https://imgs.search.brave.com/-cpbUIT6oXZ5dAZudcw7qSohHBRWyblA67-42JGDNds/rs:fit:597:225:1/g:ce/aHR0cHM6Ly90c2Uy/Lm1tLmJpbmcubmV0/L3RoP2lkPU9JUC4x/eldrNlhVVWxWQTh5/WHJOUDh1MjNRSGFG/NCZwaWQ9QXBp",
       address: "33 Water Ln, 44444 Maine",
       contactEmail: "swim@test.com",
+      isFavorite: false,
     },
   ];
 
@@ -49,34 +51,40 @@
 
     meetups = [newMeetup, ...meetups];
   }
+
+  function toggleFavorite(event) {
+    const id = event.detail;
+    const updatedMeetup = { ...meetups.find((m) => m.id === id) };
+    updatedMeetup.isFavorite = !updatedMeetup.isFavorite;
+    const index = meetups.findIndex((m) => m.id === id);
+    const updatedMeetups = [...meetups];
+    updatedMeetups[index] = updatedMeetup;
+    meetups = updatedMeetups;
+  }
 </script>
 
 <Header />
 <main>
   <form on:submit|preventDefault={addMeetup}>
     <TextInput
-      type="text"
       id="title"
       label="Title"
       value={title}
       on:input={(event) => (title = event.target.value)}
     />
     <TextInput
-      type="text"
       id="subtitle"
       label="Subtitle"
       value={subtitle}
       on:input={(event) => (subtitle = event.target.value)}
     />
     <TextInput
-      type="text"
       id="address"
       label="Address"
       value={address}
       on:input={(event) => (address = event.target.value)}
     />
     <TextInput
-      type="text"
       id="imageUrl"
       label="Image URL"
       value={imageUrl}
@@ -98,7 +106,7 @@
     />
     <Button type="submit" caption="Save" />
   </form>
-  <MeetupGrid {meetups} />
+  <MeetupGrid {meetups} on:togglefavorite={toggleFavorite} />
 </main>
 
 <style>
