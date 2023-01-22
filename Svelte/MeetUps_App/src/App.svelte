@@ -3,6 +3,7 @@
   import MeetupGrid from "./Meetups/MeetupGrid.svelte";
   import EditMeetup from "./Meetups/EditMeetup.svelte";
   import Button from "./UI/Button.svelte";
+  import Badge from "./UI/Badge.svelte";
 
   let meetups = [
     {
@@ -65,7 +66,7 @@
 <Header />
 <main>
   <div class="meetup-controls">
-    <Button caption="New Meetup" on:click={() => (editMode = "add")} />
+    <Button on:click={() => (editMode = "add")}>New Meetup</Button>
   </div>
   {#if editMode === "add"}
     <EditMeetup on:save={addMeetup} />
