@@ -6,11 +6,13 @@
   let selectedOption = 1;
   let price = 0;
   let agreed;
-  let favColor = "red";
+  let favColor = ["red"];
+  let singleFavColor = "red";
 
   $: console.log(val);
   $: console.log(agreed);
   $: console.log(favColor);
+  $: console.log(singleFavColor);
 </script>
 
 <h1>Bindings & Forms</h1>
@@ -32,14 +34,20 @@
 
 <h1>Favorite color?</h1>
 <label>
-  <input type="radio" name="color" value="red" bind:group={favColor} />
+  <input type="checkbox" name="color" value="red" bind:group={favColor} />
   Red
 </label>
 <label>
-  <input type="radio" name="color" value="green" bind:group={favColor} />
+  <input type="checkbox" name="color" value="green" bind:group={favColor} />
   Green
 </label>
 <label>
-  <input type="radio" name="color" value="blue" bind:group={favColor} />
+  <input type="checkbox" name="color" value="blue" bind:group={favColor} />
   Blue
 </label>
+
+<select bind:value={singleFavColor}>
+  <option value="green">Green</option>
+  <option value="red">Red</option>
+  <option value="blue">Blue</option>
+</select>
