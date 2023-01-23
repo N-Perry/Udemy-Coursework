@@ -3,6 +3,7 @@
   import Button from "../UI/Button.svelte";
   import Modal from "../UI/Modal.svelte";
   import { createEventDispatcher } from "svelte";
+  import { isEmpty, isValidEmail } from "../helpers/validation";
 
   let title = "";
   let subtitle = "";
@@ -12,6 +13,20 @@
   let imageUrl = "";
 
   const dispatch = createEventDispatcher();
+
+  $: titleValid = !isEmpty(title);
+  $: subtitleValid = !isEmpty(subtitle);
+  $: descriptionValid = !isEmpty(description);
+  $: addressValid = !isEmpty(address);
+  $: emailValid = isValidEmail(contactEmail);
+  $: imageUrlValid = !isEmpty(imageUrl);
+  $: formIsValid =
+    titleValid &&
+    subtitleValid &&
+    descriptionValid &&
+    addressValid &&
+    emailValid &&
+    imageUrlValid;
 
   function submitForm() {
     dispatch("save", {
@@ -35,24 +50,32 @@
       id="title"
       label="Title"
       value={title}
+      valid={titleValid}
+      validityMessage={"Please enter a valid title."}
       on:input={(event) => (title = event.target.value)}
     />
     <TextInput
       id="subtitle"
       label="Subtitle"
       value={subtitle}
+      valid={subtitleValid}
+      validityMessage={"Please enter a valid subtitle."}
       on:input={(event) => (subtitle = event.target.value)}
     />
     <TextInput
       id="address"
       label="Address"
       value={address}
+      valid={addressValid}
+      validityMessage={"Please enter a valid address."}
       on:input={(event) => (address = event.target.value)}
     />
     <TextInput
       id="imageUrl"
       label="Image URL"
       value={imageUrl}
+      valid={imageUrlValid}
+      validityMessage={"Please enter a valid image URL."}
       on:input={(event) => (imageUrl = event.target.value)}
     />
     <TextInput
@@ -60,19 +83,24 @@
       id="email"
       label="E-Mail"
       value={contactEmail}
+      valid={emailValid}
+      validityMessage={"Please enter a valid E-Mail."}
       on:input={(event) => (contactEmail = event.target.value)}
     />
     <TextInput
       controlType="textarea"
       id="description"
       label="Description"
-      value={description}
-      on:input={(event) => (description = event.target.value)}
+      valid={descriptionValid}
+      validityMessage={"Please enter a valid description."}
+      bind:value={description}
     />
   </form>
   <div slot="footer">
     <Button type="submit" mode="outline" on:click={cancel}>Cancel</Button>
-    <Button type="submit" on:click={submitForm}>Save</Button>
+    <Button type="submit" on:click={submitForm} disabled={!formIsValid}
+      >Save</Button
+    >
   </div>
 </Modal>
 
