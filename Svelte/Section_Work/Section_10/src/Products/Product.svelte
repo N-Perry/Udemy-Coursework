@@ -1,4 +1,6 @@
 <script>
+  import cart from "../Cart/cart-store";
+  import cartItems from "../Cart/cart-store";
   import Button from "../UI/Button.svelte";
 
   export let id;
@@ -7,10 +9,30 @@
   export let description;
 
   function addToCart() {
-    // Now what?
-    console.log(id);
+    //cartItems.set([]);
+    cartItems.update((currentStoreData) => {
+      return [
+        ...currentStoreData,
+        {
+          id,
+          title,
+          price,
+        },
+      ];
+    });
   }
 </script>
+
+<div class="product">
+  <div>
+    <h1>{title}</h1>
+    <h2>{price}</h2>
+    <p>{description}</p>
+  </div>
+  <div>
+    <Button on:click={addToCart}>Add to Cart</Button>
+  </div>
+</div>
 
 <style>
   .product {
@@ -39,14 +61,3 @@
     margin: 0;
   }
 </style>
-
-<div class="product">
-  <div>
-    <h1>{title}</h1>
-    <h2>{price}</h2>
-    <p>{description}</p>
-  </div>
-  <div>
-    <Button on:click={addToCart}>Add to Cart</Button>
-  </div>
-</div>
