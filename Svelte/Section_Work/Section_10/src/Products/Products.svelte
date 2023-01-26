@@ -1,7 +1,8 @@
 <script>
   import Product from "../Products/Product.svelte";
+  import { products } from "./products-store";
 
-  let products = [
+  /* let products = [
     {
       id: "p1",
       title: "A Book",
@@ -14,8 +15,20 @@
       price: 99.99,
       description: "Red and green."
     }
-  ];
+  ]; */
 </script>
+
+<section>
+  <h1>Products</h1>
+  {#each $products as product (product.id)}
+    <Product
+      id={product.id}
+      title={product.title}
+      price={product.price}
+      description={product.description}
+    />
+  {/each}
+</section>
 
 <style>
   section {
@@ -24,14 +37,3 @@
     margin: 2rem auto;
   }
 </style>
-
-<section>
-  <h1>Products</h1>
-  {#each products as product (product.id)}
-    <Product
-      id={product.id}
-      title={product.title}
-      price={product.price}
-      description={product.description} />
-  {/each}
-</section>
