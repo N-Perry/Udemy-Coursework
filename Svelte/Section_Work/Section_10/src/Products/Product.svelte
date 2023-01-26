@@ -1,6 +1,5 @@
 <script>
   import cart from "../Cart/cart-store";
-  import cartItems from "../Cart/cart-store";
   import Button from "../UI/Button.svelte";
 
   export let id;
@@ -10,16 +9,7 @@
 
   function addToCart() {
     //cartItems.set([]);
-    cartItems.update((currentStoreData) => {
-      return [
-        ...currentStoreData,
-        {
-          id,
-          title,
-          price,
-        },
-      ];
-    });
+    cart.addItem({ id, title, price });
   }
 </script>
 

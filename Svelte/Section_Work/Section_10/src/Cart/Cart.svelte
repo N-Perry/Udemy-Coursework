@@ -3,17 +3,23 @@
   import CartItem from "./CartItem.svelte";
   import cartItems from "./cart-store";
 
+  import { timer } from "../UI/timer-store";
+
+  const unsubscribe = timer.subscribe((count) => {
+    console.log("Cart: " + count);
+  });
   /* let items;
 
   const unsubscribe = cartItems.subscribe((storeData) => {
     items = storeData;
   });
+  */
 
   onDestroy(() => {
     if (unsubscribe) {
       unsubscribe();
     }
-  }); */
+  });
 
   /* export let items = [
     {
