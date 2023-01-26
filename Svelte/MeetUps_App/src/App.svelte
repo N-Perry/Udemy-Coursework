@@ -13,15 +13,6 @@
     const { title, subtitle, description, imageUrl, address, contactEmail } =
       event.detail;
 
-    const meetupData = {
-      title,
-      subtitle,
-      description,
-      imageUrl,
-      address,
-      contactEmail,
-    };
-
     meetups.addMeetup(meetupData);
     editMode = null;
   }
