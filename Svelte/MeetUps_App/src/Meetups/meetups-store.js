@@ -48,6 +48,11 @@ const customMeetups = {
       return updatedMeetups;
     });
   },
+  removeMeetup: (id) => {
+    meetups.update((existingItems) => {
+      return existingItems.filter((item) => item.id !== id);
+    });
+  },
   toggleFavorite: (id) => {
     meetups.update((existingItems) => {
       const updatedMeetup = { ...existingItems.find((m) => m.id === id) };

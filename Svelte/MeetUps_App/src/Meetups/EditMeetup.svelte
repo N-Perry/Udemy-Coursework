@@ -68,6 +68,11 @@
   function cancel() {
     dispatch("cancel");
   }
+
+  function deleteMeetup() {
+    meetups.removeMeetup(id);
+    dispatch("save");
+  }
 </script>
 
 <Modal title="Edit Meetup Data" on:cancel>
@@ -127,6 +132,9 @@
     <Button type="submit" on:click={submitForm} disabled={!formIsValid}
       >Save</Button
     >
+    {#if id}
+      <Button on:click={deleteMeetup}>Delete</Button>
+    {/if}
   </div>
 </Modal>
 
