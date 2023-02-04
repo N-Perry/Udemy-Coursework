@@ -3,6 +3,7 @@
   import { tweened } from "svelte/motion";
   import { cubicIn } from "svelte/easing";
   import { fade, fly, slide, scale } from "svelte/transition";
+  import { flip } from "svelte/animate";
 
   import Spring from "./Spring.svelte";
 
@@ -22,7 +23,7 @@
   let boxes = [];
 
   function addBox() {
-    boxes = [...boxes, boxInput];
+    boxes = [boxInput, ...boxes];
   }
 
   function discard(value) {
@@ -52,6 +53,7 @@
       on:introend={() => console.log("Adding element ends")}
       on:outrostart={() => console.log("Removing element starts")}
       on:outroend={() => console.log("Removing element starts")}
+      animate:flip={{ duration: 300 }}
     >
       {box}
     </div>
