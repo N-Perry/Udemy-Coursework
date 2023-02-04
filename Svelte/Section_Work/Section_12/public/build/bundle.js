@@ -84,6 +84,9 @@ var app = (function () {
             }
         };
     }
+    function append(target, node) {
+        target.appendChild(node);
+    }
     function insert(target, node, anchor) {
         target.insertBefore(node, anchor || null);
     }
@@ -95,8 +98,26 @@ var app = (function () {
     function element(name) {
         return document.createElement(name);
     }
+    function listen(node, event, handler, options) {
+        node.addEventListener(event, handler, options);
+        return () => node.removeEventListener(event, handler, options);
+    }
+    function attr(node, attribute, value) {
+        if (value == null)
+            node.removeAttribute(attribute);
+        else if (node.getAttribute(attribute) !== value)
+            node.setAttribute(attribute, value);
+    }
     function children(element) {
         return Array.from(element.childNodes);
+    }
+    function set_style(node, key, value, important) {
+        if (value === null) {
+            node.style.removeProperty(key);
+        }
+        else {
+            node.style.setProperty(key, value, important ? 'important' : '');
+        }
     }
     function custom_event(type, detail, { bubbles = false, cancelable = false } = {}) {
         const e = document.createEvent('CustomEvent');
@@ -205,11 +226,124 @@ var app = (function () {
         }
     }
     const outroing = new Set();
+    let outros;
     function transition_in(block, local) {
         if (block && block.i) {
             outroing.delete(block);
             block.i(local);
         }
+    }
+    function transition_out(block, local, detach, callback) {
+        if (block && block.o) {
+            if (outroing.has(block))
+                return;
+            outroing.add(block);
+            outros.c.push(() => {
+                outroing.delete(block);
+                if (callback) {
+                    if (detach)
+                        block.d(1);
+                    callback();
+                }
+            });
+            block.o(local);
+        }
+        else if (callback) {
+            callback();
+        }
+    }
+
+    function destroy_block(block, lookup) {
+        block.d(1);
+        lookup.delete(block.key);
+    }
+    function update_keyed_each(old_blocks, dirty, get_key, dynamic, ctx, list, lookup, node, destroy, create_each_block, next, get_context) {
+        let o = old_blocks.length;
+        let n = list.length;
+        let i = o;
+        const old_indexes = {};
+        while (i--)
+            old_indexes[old_blocks[i].key] = i;
+        const new_blocks = [];
+        const new_lookup = new Map();
+        const deltas = new Map();
+        i = n;
+        while (i--) {
+            const child_ctx = get_context(ctx, list, i);
+            const key = get_key(child_ctx);
+            let block = lookup.get(key);
+            if (!block) {
+                block = create_each_block(key, child_ctx);
+                block.c();
+            }
+            else if (dynamic) {
+                block.p(child_ctx, dirty);
+            }
+            new_lookup.set(key, new_blocks[i] = block);
+            if (key in old_indexes)
+                deltas.set(key, Math.abs(i - old_indexes[key]));
+        }
+        const will_move = new Set();
+        const did_move = new Set();
+        function insert(block) {
+            transition_in(block, 1);
+            block.m(node, next);
+            lookup.set(block.key, block);
+            next = block.first;
+            n--;
+        }
+        while (o && n) {
+            const new_block = new_blocks[n - 1];
+            const old_block = old_blocks[o - 1];
+            const new_key = new_block.key;
+            const old_key = old_block.key;
+            if (new_block === old_block) {
+                // do nothing
+                next = new_block.first;
+                o--;
+                n--;
+            }
+            else if (!new_lookup.has(old_key)) {
+                // remove old block
+                destroy(old_block, lookup);
+                o--;
+            }
+            else if (!lookup.has(new_key) || will_move.has(new_key)) {
+                insert(new_block);
+            }
+            else if (did_move.has(old_key)) {
+                o--;
+            }
+            else if (deltas.get(new_key) > deltas.get(old_key)) {
+                did_move.add(new_key);
+                insert(new_block);
+            }
+            else {
+                will_move.add(old_key);
+                o--;
+            }
+        }
+        while (o--) {
+            const old_block = old_blocks[o];
+            if (!new_lookup.has(old_block.key))
+                destroy(old_block, lookup);
+        }
+        while (n)
+            insert(new_blocks[n - 1]);
+        return new_blocks;
+    }
+    function validate_each_keys(ctx, list, get_context, get_key) {
+        const keys = new Set();
+        for (let i = 0; i < list.length; i++) {
+            const key = get_key(get_context(ctx, list, i));
+            if (keys.has(key)) {
+                throw new Error('Cannot have duplicate keys in a keyed each');
+            }
+            keys.add(key);
+        }
+    }
+    function create_component(block) {
+        block && block.c();
     }
     function mount_component(component, target, anchor, customElement) {
         const { fragment, after_update } = component.$$;
@@ -346,6 +480,10 @@ var app = (function () {
     function dispatch_dev(type, detail) {
         document.dispatchEvent(custom_event(type, Object.assign({ version: '3.55.1' }, detail), { bubbles: true }));
     }
+    function append_dev(target, node) {
+        dispatch_dev('SvelteDOMInsert', { target, node });
+        append(target, node);
+    }
     function insert_dev(target, node, anchor) {
         dispatch_dev('SvelteDOMInsert', { target, node, anchor });
         insert(target, node, anchor);
@@ -354,9 +492,34 @@ var app = (function () {
         dispatch_dev('SvelteDOMRemove', { node });
         detach(node);
     }
-    function prop_dev(node, property, value) {
-        node[property] = value;
-        dispatch_dev('SvelteDOMSetProperty', { node, property, value });
+    function listen_dev(node, event, handler, options, has_prevent_default, has_stop_propagation) {
+        const modifiers = options === true ? ['capture'] : options ? Array.from(Object.keys(options)) : [];
+        if (has_prevent_default)
+            modifiers.push('preventDefault');
+        if (has_stop_propagation)
+            modifiers.push('stopPropagation');
+        dispatch_dev('SvelteDOMAddEventListener', { node, event, handler, modifiers });
+        const dispose = listen(node, event, handler, options);
+        return () => {
+            dispatch_dev('SvelteDOMRemoveEventListener', { node, event, handler, modifiers });
+            dispose();
+        };
+    }
+    function attr_dev(node, attribute, value) {
+        attr(node, attribute, value);
+        if (value == null)
+            dispatch_dev('SvelteDOMRemoveAttribute', { node, attribute });
+        else
+            dispatch_dev('SvelteDOMSetAttribute', { node, attribute, value });
+    }
+    function validate_each_argument(arg) {
+        if (typeof arg !== 'string' && !(arg && typeof arg === 'object' && 'length' in arg)) {
+            let msg = '{#each} only iterates over array-like objects.';
+            if (typeof Symbol === 'function' && arg && Symbol.iterator in arg) {
+                msg += ' You can use a spread to convert this iterable into an array.';
+            }
+            throw new Error(msg);
+        }
     }
     function validate_slots(name, slot, keys) {
         for (const slot_key of Object.keys(slot)) {
@@ -439,6 +602,113 @@ var app = (function () {
 
     function is_date(obj) {
         return Object.prototype.toString.call(obj) === '[object Date]';
+    }
+
+    function tick_spring(ctx, last_value, current_value, target_value) {
+        if (typeof current_value === 'number' || is_date(current_value)) {
+            // @ts-ignore
+            const delta = target_value - current_value;
+            // @ts-ignore
+            const velocity = (current_value - last_value) / (ctx.dt || 1 / 60); // guard div by 0
+            const spring = ctx.opts.stiffness * delta;
+            const damper = ctx.opts.damping * velocity;
+            const acceleration = (spring - damper) * ctx.inv_mass;
+            const d = (velocity + acceleration) * ctx.dt;
+            if (Math.abs(d) < ctx.opts.precision && Math.abs(delta) < ctx.opts.precision) {
+                return target_value; // settled
+            }
+            else {
+                ctx.settled = false; // signal loop to keep ticking
+                // @ts-ignore
+                return is_date(current_value) ?
+                    new Date(current_value.getTime() + d) : current_value + d;
+            }
+        }
+        else if (Array.isArray(current_value)) {
+            // @ts-ignore
+            return current_value.map((_, i) => tick_spring(ctx, last_value[i], current_value[i], target_value[i]));
+        }
+        else if (typeof current_value === 'object') {
+            const next_value = {};
+            for (const k in current_value) {
+                // @ts-ignore
+                next_value[k] = tick_spring(ctx, last_value[k], current_value[k], target_value[k]);
+            }
+            // @ts-ignore
+            return next_value;
+        }
+        else {
+            throw new Error(`Cannot spring ${typeof current_value} values`);
+        }
+    }
+    function spring(value, opts = {}) {
+        const store = writable(value);
+        const { stiffness = 0.15, damping = 0.8, precision = 0.01 } = opts;
+        let last_time;
+        let task;
+        let current_token;
+        let last_value = value;
+        let target_value = value;
+        let inv_mass = 1;
+        let inv_mass_recovery_rate = 0;
+        let cancel_task = false;
+        function set(new_value, opts = {}) {
+            target_value = new_value;
+            const token = current_token = {};
+            if (value == null || opts.hard || (spring.stiffness >= 1 && spring.damping >= 1)) {
+                cancel_task = true; // cancel any running animation
+                last_time = now();
+                last_value = new_value;
+                store.set(value = target_value);
+                return Promise.resolve();
+            }
+            else if (opts.soft) {
+                const rate = opts.soft === true ? .5 : +opts.soft;
+                inv_mass_recovery_rate = 1 / (rate * 60);
+                inv_mass = 0; // infinite mass, unaffected by spring forces
+            }
+            if (!task) {
+                last_time = now();
+                cancel_task = false;
+                task = loop(now => {
+                    if (cancel_task) {
+                        cancel_task = false;
+                        task = null;
+                        return false;
+                    }
+                    inv_mass = Math.min(inv_mass + inv_mass_recovery_rate, 1);
+                    const ctx = {
+                        inv_mass,
+                        opts: spring,
+                        settled: true,
+                        dt: (now - last_time) * 60 / 1000
+                    };
+                    const next_value = tick_spring(ctx, last_value, value, target_value);
+                    last_time = now;
+                    last_value = value;
+                    store.set(value = next_value);
+                    if (ctx.settled) {
+                        task = null;
+                    }
+                    return !ctx.settled;
+                });
+            }
+            return new Promise(fulfil => {
+                task.promise.then(() => {
+                    if (token === current_token)
+                        fulfil();
+                });
+            });
+        }
+        const spring = {
+            set,
+            update: (fn, opts) => set(fn(target_value, value), opts),
+            subscribe: store.subscribe,
+            stiffness,
+            damping,
+            precision
+        };
+        return spring;
     }
 
     function get_interpolator(a, b) {
@@ -536,33 +806,267 @@ var app = (function () {
         };
     }
 
-    /* src/App.svelte generated by Svelte v3.55.1 */
-    const file = "src/App.svelte";
+    /* src/Spring.svelte generated by Svelte v3.55.1 */
+    const file = "src/Spring.svelte";
 
-    function create_fragment(ctx) {
-    	let progress_1;
+    function get_each_context(ctx, list, i) {
+    	const child_ctx = ctx.slice();
+    	child_ctx[5] = list[i];
+    	child_ctx[7] = i;
+    	return child_ctx;
+    }
+
+    // (63:4) {#each $cards as card, i (card.id)}
+    function create_each_block(key_1, ctx) {
+    	let div;
+    	let mounted;
+    	let dispose;
+
+    	const block = {
+    		key: key_1,
+    		first: null,
+    		c: function create() {
+    			div = element("div");
+    			attr_dev(div, "class", "card svelte-1a1ekzd");
+    			set_style(div, "background", /*card*/ ctx[5].color);
+    			set_style(div, "transform", "rotateZ(" + /*$cardPos*/ ctx[1][/*i*/ ctx[7]].rotation + "deg) translateX(" + /*$cardPos*/ ctx[1][/*i*/ ctx[7]].dx + "px)");
+    			add_location(div, file, 63, 6, 1106);
+    			this.first = div;
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, div, anchor);
+
+    			if (!mounted) {
+    				dispose = listen_dev(
+    					div,
+    					"click",
+    					function () {
+    						if (is_function(/*discard*/ ctx[4].bind(this, /*i*/ ctx[7]))) /*discard*/ ctx[4].bind(this, /*i*/ ctx[7]).apply(this, arguments);
+    					},
+    					false,
+    					false,
+    					false
+    				);
+
+    				mounted = true;
+    			}
+    		},
+    		p: function update(new_ctx, dirty) {
+    			ctx = new_ctx;
+
+    			if (dirty & /*$cards*/ 1) {
+    				set_style(div, "background", /*card*/ ctx[5].color);
+    			}
+
+    			if (dirty & /*$cardPos, $cards*/ 3) {
+    				set_style(div, "transform", "rotateZ(" + /*$cardPos*/ ctx[1][/*i*/ ctx[7]].rotation + "deg) translateX(" + /*$cardPos*/ ctx[1][/*i*/ ctx[7]].dx + "px)");
+    			}
+    		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(div);
+    			mounted = false;
+    			dispose();
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_each_block.name,
+    		type: "each",
+    		source: "(63:4) {#each $cards as card, i (card.id)}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    function create_fragment$1(ctx) {
+    	let div1;
+    	let div0;
+    	let each_blocks = [];
+    	let each_1_lookup = new Map();
+    	let each_value = /*$cards*/ ctx[0];
+    	validate_each_argument(each_value);
+    	const get_key = ctx => /*card*/ ctx[5].id;
+    	validate_each_keys(ctx, each_value, get_each_context, get_key);
+
+    	for (let i = 0; i < each_value.length; i += 1) {
+    		let child_ctx = get_each_context(ctx, each_value, i);
+    		let key = get_key(child_ctx);
+    		each_1_lookup.set(key, each_blocks[i] = create_each_block(key, child_ctx));
+    	}
 
     	const block = {
     		c: function create() {
-    			progress_1 = element("progress");
-    			progress_1.value = /*$progress*/ ctx[0];
-    			add_location(progress_1, file, 16, 0, 299);
+    			div1 = element("div");
+    			div0 = element("div");
+
+    			for (let i = 0; i < each_blocks.length; i += 1) {
+    				each_blocks[i].c();
+    			}
+
+    			attr_dev(div0, "class", "cards");
+    			add_location(div0, file, 61, 2, 1040);
+    			attr_dev(div1, "class", "page svelte-1a1ekzd");
+    			add_location(div1, file, 60, 0, 1019);
     		},
     		l: function claim(nodes) {
     			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
     		},
     		m: function mount(target, anchor) {
-    			insert_dev(target, progress_1, anchor);
+    			insert_dev(target, div1, anchor);
+    			append_dev(div1, div0);
+
+    			for (let i = 0; i < each_blocks.length; i += 1) {
+    				each_blocks[i].m(div0, null);
+    			}
     		},
     		p: function update(ctx, [dirty]) {
-    			if (dirty & /*$progress*/ 1) {
-    				prop_dev(progress_1, "value", /*$progress*/ ctx[0]);
+    			if (dirty & /*$cards, $cardPos, discard*/ 19) {
+    				each_value = /*$cards*/ ctx[0];
+    				validate_each_argument(each_value);
+    				validate_each_keys(ctx, each_value, get_each_context, get_key);
+    				each_blocks = update_keyed_each(each_blocks, dirty, get_key, 1, ctx, each_value, each_1_lookup, div0, destroy_block, create_each_block, null, get_each_context);
     			}
     		},
     		i: noop,
     		o: noop,
     		d: function destroy(detaching) {
-    			if (detaching) detach_dev(progress_1);
+    			if (detaching) detach_dev(div1);
+
+    			for (let i = 0; i < each_blocks.length; i += 1) {
+    				each_blocks[i].d();
+    			}
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_fragment$1.name,
+    		type: "component",
+    		source: "",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    function instance$1($$self, $$props, $$invalidate) {
+    	let $cards;
+    	let $cardPos;
+    	let { $$slots: slots = {}, $$scope } = $$props;
+    	validate_slots('Spring', slots, []);
+
+    	let cards = writable([
+    		{ id: "c1", color: "red" },
+    		{ id: "c2", color: "blue" },
+    		{ id: "c3", color: "green" },
+    		{ id: "c4", color: "orange" }
+    	]);
+
+    	validate_store(cards, 'cards');
+    	component_subscribe($$self, cards, value => $$invalidate(0, $cards = value));
+
+    	let cardPos = spring(
+    		[
+    			{ rotation: 10, dx: 0 },
+    			{ rotation: -10, dx: 0 },
+    			{ rotation: 19, dx: 0 },
+    			{ rotation: -25, dx: 0 }
+    		],
+    		{
+    			stiffness: 0.05,
+    			damping: 0.55,
+    			precision: 0.001
+    		}
+    	);
+
+    	validate_store(cardPos, 'cardPos');
+    	component_subscribe($$self, cardPos, value => $$invalidate(1, $cardPos = value));
+
+    	function discard(index) {
+    		cardPos.update(items => {
+    			const updatedCardPositions = [...items];
+    			const updatedCardPos = { ...updatedCardPositions[index] };
+    			updatedCardPos.dx = 1200;
+    			updatedCardPos.rotation = 60;
+    			updatedCardPositions[index] = updatedCardPos;
+    			return updatedCardPositions;
+    		});
+    	}
+
+    	const writable_props = [];
+
+    	Object.keys($$props).forEach(key => {
+    		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== '$$' && key !== 'slot') console.warn(`<Spring> was created with unknown prop '${key}'`);
+    	});
+
+    	$$self.$capture_state = () => ({
+    		writable,
+    		spring,
+    		cards,
+    		cardPos,
+    		discard,
+    		$cards,
+    		$cardPos
+    	});
+
+    	$$self.$inject_state = $$props => {
+    		if ('cards' in $$props) $$invalidate(2, cards = $$props.cards);
+    		if ('cardPos' in $$props) $$invalidate(3, cardPos = $$props.cardPos);
+    	};
+
+    	if ($$props && "$$inject" in $$props) {
+    		$$self.$inject_state($$props.$$inject);
+    	}
+
+    	return [$cards, $cardPos, cards, cardPos, discard];
+    }
+
+    class Spring extends SvelteComponentDev {
+    	constructor(options) {
+    		super(options);
+    		init(this, options, instance$1, create_fragment$1, safe_not_equal, {});
+
+    		dispatch_dev("SvelteRegisterComponent", {
+    			component: this,
+    			tagName: "Spring",
+    			options,
+    			id: create_fragment$1.name
+    		});
+    	}
+    }
+
+    /* src/App.svelte generated by Svelte v3.55.1 */
+
+    function create_fragment(ctx) {
+    	let spring;
+    	let current;
+    	spring = new Spring({ $$inline: true });
+
+    	const block = {
+    		c: function create() {
+    			create_component(spring.$$.fragment);
+    		},
+    		l: function claim(nodes) {
+    			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
+    		},
+    		m: function mount(target, anchor) {
+    			mount_component(spring, target, anchor);
+    			current = true;
+    		},
+    		p: noop,
+    		i: function intro(local) {
+    			if (current) return;
+    			transition_in(spring.$$.fragment, local);
+    			current = true;
+    		},
+    		o: function outro(local) {
+    			transition_out(spring.$$.fragment, local);
+    			current = false;
+    		},
+    		d: function destroy(detaching) {
+    			destroy_component(spring, detaching);
     		}
     	};
 
@@ -578,12 +1082,9 @@ var app = (function () {
     }
 
     function instance($$self, $$props, $$invalidate) {
-    	let $progress;
     	let { $$slots: slots = {}, $$scope } = $$props;
     	validate_slots('App', slots, []);
     	const progress = tweened(0, { delay: 0, duration: 700, easing: cubicIn });
-    	validate_store(progress, 'progress');
-    	component_subscribe($$self, progress, value => $$invalidate(0, $progress = value));
 
     	setTimeout(
     		() => {
@@ -602,11 +1103,11 @@ var app = (function () {
     		writable,
     		tweened,
     		cubicIn,
-    		progress,
-    		$progress
+    		Spring,
+    		progress
     	});
 
-    	return [$progress, progress];
+    	return [];
     }
 
     class App extends SvelteComponentDev {
