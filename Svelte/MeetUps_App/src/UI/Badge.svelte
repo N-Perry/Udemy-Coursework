@@ -1,6 +1,8 @@
-<script></script>
+<script>
+  import { scale } from "svelte/transition";
+</script>
 
-<span><slot /> </span>
+<span transition:scale={{ duration: 150 }}><slot /> </span>
 
 <style>
   span {
