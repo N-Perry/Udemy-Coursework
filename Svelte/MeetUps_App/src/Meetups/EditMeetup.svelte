@@ -5,6 +5,7 @@
   import { createEventDispatcher } from "svelte";
   import { isEmpty, isValidEmail } from "../helpers/validation";
   import meetups from "./meetups-store";
+  import Error from "../UI/Error.svelte";
 
   export let id = null;
 
@@ -14,6 +15,7 @@
   let address = "";
   let contactEmail = "";
   let imageUrl = "";
+  let error;
 
   if (id) {
     const unsubscribe = meetups.subscribe((items) => {
@@ -72,6 +74,7 @@
           meetups.updateMeetup(id, meetupData);
         })
         .catch((err) => {
+          error = err;
           console.log(err);
         });
     } else {
@@ -94,6 +97,7 @@
           });
         })
         .catch((err) => {
+          error = err;
           console.log(err);
         });
     }
@@ -119,11 +123,16 @@
         meetups.removeMeetup(id);
       })
       .catch((err) => {
+        error = err;
         console.log(err);
       });
     dispatch("save");
   }
 </script>
+
+{#if error}
+  <Error message={error.message} />
+{/if}
 
 <Modal title="Edit Meetup Data" on:cancel>
   <form on:submit|preventDefault={submitForm}>
