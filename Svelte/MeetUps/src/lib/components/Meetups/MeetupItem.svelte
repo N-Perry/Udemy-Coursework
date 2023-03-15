@@ -1,11 +1,11 @@
 <script>
 	import { createEventDispatcher } from 'svelte';
 
-	import meetups from '../../../meetups-store.js';
+	import meetups from '$lib/meetups-store.js';
 
 	import Button from '../UI/Button.svelte';
 	import Badge from '../UI/Badge.svelte';
-	import LoadingSpinner from '$lib/components/UI';
+	import LoadingSpinner from '$lib/components/UI/LoadingSpinner.svelte';
 
 	export let id;
 	export let title;
