@@ -13,10 +13,6 @@
 					loadedMeetups.push({ ...data[key], id: key });
 				}
 				return { fetchedMeetups: loadedMeetups };
-				/* setTimeout(() => {
-					isLoading = false;
-					meetups.setMeetups(loadedMeetups.reverse());
-				}, 1000); */
 			})
 			.catch((err) => {
 				error = err;
@@ -37,8 +33,10 @@
 	import LoadingSpinner from '$lib/components/UI/LoadingSpinner.svelte';
 	import meetups from '$lib/meetups-store.js';
 
-	export let fetchedMeetups;
+	export let data;
 
+	let fetchedMeetups = data.fetchedMeetups;
+	let loadedMeetups = [];
 	let editMode = null;
 	let editedId;
 	let isLoading;
@@ -49,11 +47,20 @@
 	let unsubscribe;
 
 	$: filteredMeetups = favsOnly
-		? fetchedMeetups.filter((meetup) => meetup.isFavorite)
-		: fetchedMeetups;
+		? loadedMeetups.filter((meetup) => meetup.isFavorite)
+		: loadedMeetups;
 
 	onMount(() => {
+		unsubscribe = meetups.subscribe((items) => {
+			loadedMeetups = items;
+		});
 		meetups.setMeetups(fetchedMeetups);
+	});
+
+	onDestroy(() => {
+		if (unsubscribe) {
+			unsubscribe();
+		}
 	});
 
 	function setFilter(event) {
@@ -74,6 +81,10 @@
 		editMode = 'edit';
 		editedId = event.detail;
 	}
+
+	function startAdd() {
+		editMode = 'edit';
+	}
 </script>
 
 <svelte:head>
@@ -89,7 +100,7 @@
 	<section id="meetup-controls">
 		<MeetupFilter on:select={setFilter} />
 
-		<Button on:click={() => dispatch('add')}>New Meetup</Button>
+		<Button on:click={startAdd}>New Meetup</Button>
 	</section>
 	{#if filteredMeetups.length === 0}
 		<p id="no-meetups">No meetups found, you can start adding some</p>
