@@ -1,27 +1,3 @@
-<script context="module">
-	export function preload(page) {
-		return this.fetch('https://meetups-svlte-default-rtdb.firebaseio.com/meetups.json')
-			.then((res) => {
-				if (!res.ok) {
-					throw new Error('Fetching meetups failed, please try again later!');
-				}
-				return res.json();
-			})
-			.then((data) => {
-				const loadedMeetups = [];
-				for (const key in data) {
-					loadedMeetups.push({ ...data[key], id: key });
-				}
-				return { fetchedMeetups: loadedMeetups };
-			})
-			.catch((err) => {
-				error = err;
-				isLoading = false;
-				this.error(500, 'Could not fetch meetups!');
-			});
-	}
-</script>
-
 <script>
 	import { createEventDispatcher, onMount, onDestroy } from 'svelte';
 	import { scale } from 'svelte/transition';
