@@ -117,8 +117,7 @@
 					address={meetup.address}
 					isFav={meetup.isFavorite}
 					email={meetup.contactEmail}
-					on:showdetails
-					on:edit
+					on:edit={startEdit}
 				/>
 			</div>
 		{/each}

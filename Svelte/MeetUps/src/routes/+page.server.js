@@ -13,5 +13,5 @@ export async function load({ fetch }) {
 		throw new Error('Fetching meetups failed, please try again later!');
 	}
 
-	return { fetchedMeetups: loadedMeetups };
+	return { fetchedMeetups: loadedMeetups.reverse() };
 }
